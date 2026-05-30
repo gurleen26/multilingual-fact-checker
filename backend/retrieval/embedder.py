@@ -4,7 +4,7 @@ import numpy as np
 # ── Load model once at startup (not on every call) ──────────
 # all-MiniLM-L6-v2 = fast English model, 384 dimensions
 # We'll upgrade to multilingual LaBSE in Module 5
-model = SentenceTransformer("./models/all-MiniLM-L6-v2")
+model = SentenceTransformer("./models/multilingual")
 
 def embed(texts: list[str]) -> np.ndarray:
     """Convert a list of strings into a 2D array of vectors."""
@@ -18,21 +18,25 @@ def cosine_similarity(vec_a: np.ndarray, vec_b: np.ndarray) -> float:
 
 # ── Test it ─────────────────────────────────────────────────
 if __name__ == "__main__":
-    sentences = [
-        "Who built the Eiffel Tower?",           # query
-        "The Eiffel Tower was constructed in 1889 by Gustave Eiffel.",  # relevant
-        "Python is a programming language.",      # not relevant
-        "The iron structure in Paris was designed by Eiffel.",  # relevant (no shared words!)
+    test_cases = [
+        # (query, documents to compare against)
+        ("पृथ्वी सपाट है",           # Hindi: "the earth is flat"
+         "The earth is not flat. It is an oblate spheroid confirmed by NASA."),
+
+        ("Who walked on the moon?",   # English query
+         "नील आर्मस्ट्रांग 1969 में चांद पर चलने वाले पहले इंसान थे।"),  # Hindi answer
+
+        ("La torre Eiffel",           # Spanish
+         "The Eiffel Tower was built in 1889 in Paris, France."),
     ]
 
-    vectors = embed(sentences)
+    print("Cross-lingual similarity scores:")
+    print("=" * 55)
 
-    query_vec = vectors[0]
-    print(f"Embedding shape: {vectors.shape}")  # (4, 384)
-    print(f"\nQuery: '{sentences[0]}'")
-    print(f"\nSimilarity scores:")
-
-    for i in range(1, len(sentences)):
-        score = cosine_similarity(query_vec, vectors[i])
-        bar = "█" * int(score * 20)
-        print(f"  {score:.3f} {bar} → '{sentences[i][:50]}'")
+    for query, doc in test_cases:
+        vecs = embed([query, doc])
+        score = cosine_similarity(vecs[0], vecs[1])
+        bar = "█" * int(score * 30)
+        print(f"\nQuery : {query}")
+        print(f"Doc   : {doc[:55]}...")
+        print(f"Score : {score:.3f} {bar}")
